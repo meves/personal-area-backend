@@ -1,0 +1,9 @@
+{
+    "dBase": {
+        "database": "portfolio-site",
+        "username": "root",
+        "password": "Hk_61-S*d+85",
+        "host": "localhost"
+    }, 
+    "jwtSecret": "reijbiuhiekjnkjned87t8758dejkhb3hbjkh32jhvjhgv23jhvj"
+}
