@@ -7,7 +7,8 @@ export type UserModel = {
 }
 
 export type UserParams = {
-    id: number
+    id?: number
+    username?: string
 }
 
 export type UserBody = {

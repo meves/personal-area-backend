@@ -37,10 +37,9 @@ class AuthController {
                 const decoded = jsonwebtoken_1.default.verify(token, config_1.default.get("jwtSecret"));
                 // generate new token with user data
                 const newToken = generateJwt(decoded.id, decoded.email, decoded.role);
-                return res.status(200 /* HTTP_CODES.OK_200 */).json({ newToken });
+                return res.status(200 /* HTTP_CODES.OK_200 */).json({ token: newToken });
             }
             catch (error) {
-                console.log(`error in request: ${error}`);
                 return res.status(401 /* HTTP_CODES.UNAUTHORIZED_401 */).json({ message: "User is not authorized" });
             }
         });
@@ -54,10 +53,10 @@ class AuthController {
             }
             const candidate = yield models_1.Registration.findOne({ where: { email } });
             if (!!candidate) {
-                return res.status(400 /* HTTP_CODES.BAD_REQUEST_400 */).json({ message: `User with email ${email} already exists` });
+                return res.status(409 /* HTTP_CODES.CONFLICT_409 */).json({ message: `User with email ${email} already exists` });
             }
             const hashPassword = yield bcrypt_1.default.hash(password, 12);
-            const registration = yield models_1.Registration.create({ email, password: hashPassword, role });
+            const registration = yield models_1.Registration.create({ id: Number(new Date), email, password: hashPassword, role });
             const token = generateJwt(registration.id, registration.email, registration.role);
             return res.status(201 /* HTTP_CODES.CREATED_201 */).json({ token });
         });
@@ -67,7 +66,7 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             const { email, password } = req.body;
             if (!email || !password) {
-                return res.status(400 /* HTTP_CODES.BAD_REQUEST_400 */).json({ message: "Email or password is incorrect" });
+                return res.status(400 /* HTTP_CODES.BAD_REQUEST_400 */).json({ message: "Email or password is not filled" });
             }
             const registration = yield models_1.Registration.findOne({ where: { email } });
             if (!registration) {
@@ -79,11 +78,6 @@ class AuthController {
             }
             const token = generateJwt(registration.id, registration.email, registration.role);
             return res.status(200 /* HTTP_CODES.OK_200 */).json({ token });
-        });
-    }
-    // DELETE /api/signout
-    signout(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
         });
     }
 }

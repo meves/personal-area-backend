@@ -19,7 +19,7 @@ class AuthController {
         // miss request with OPTIONS method
         if (req.method === "OPTIONS") next();
         try {
-            const token = req.headers.authorization?.split(" ")[1]; // "Bearer <token>"
+            const token: string | undefined = req.headers.authorization?.split(" ")[1]; // "Bearer <token>"
             if (!token) {
                 return res.status(HTTP_CODES.UNAUTHORIZED_401).json({ message: "User is not authorized" });
             } 
@@ -27,10 +27,8 @@ class AuthController {
             const decoded: any = jwt.verify(token, config.get("jwtSecret"));
             // generate new token with user data
             const newToken = generateJwt(decoded.id, decoded.email, decoded.role);
-            return res.status(HTTP_CODES.OK_200).json({ newToken });
+            return res.status(HTTP_CODES.OK_200).json({ token: newToken });
         } catch (error) {
-            console.log(`error in request: ${error}`);
-            
             return res.status(HTTP_CODES.UNAUTHORIZED_401).json({ message: "User is not authorized" });
         }
     }
@@ -42,10 +40,10 @@ class AuthController {
         }
         const candidate = await Registration.findOne({ where: { email } });
         if (!!candidate) {
-            return res.status(HTTP_CODES.BAD_REQUEST_400).json({ message: `User with email ${email} already exists` });
+            return res.status(HTTP_CODES.CONFLICT_409).json({ message: `User with email ${email} already exists` });
         }
         const hashPassword = await bcrypt.hash(password, 12);
-        const registration: any = await Registration.create({ email, password: hashPassword, role });
+        const registration: any = await Registration.create({ id: Number(new Date), email, password: hashPassword, role });
         const token = generateJwt(registration.id, registration.email, registration.role);
         return res.status(HTTP_CODES.CREATED_201).json({ token });
     }
@@ -53,7 +51,7 @@ class AuthController {
     async signin(req: Request, res: Response) {
         const { email, password } = req.body;
         if (!email || !password) {
-            return res.status(HTTP_CODES.BAD_REQUEST_400).json({ message: "Email or password is incorrect" })
+            return res.status(HTTP_CODES.BAD_REQUEST_400).json({ message: "Email or password is not filled" })
         }
         const registration: any = await Registration.findOne({ where: { email } });
         if (!registration) {
@@ -65,11 +63,7 @@ class AuthController {
         } 
         const token = generateJwt(registration.id, registration.email, registration.role);
         return res.status(HTTP_CODES.OK_200).json({ token });
-    }
-    // DELETE /api/signout
-    async signout(req: Request, res: Response) {
-
-    }    
+    }   
 }
 
 export default new AuthController();

@@ -17,9 +17,9 @@ app.use(cookieParser());
 
 /** static server process GET Home Page in production mode */
 if (process.env.NODE_ENV === 'production') {
-  app.use('/', express.static(path.join(__dirname, '../../personal-area-v2/build/')));
+  app.use('/', express.static(path.join(__dirname, '../../client/build/')));
   app.get('*', (req: Request, res: Response) => {
-    res.sendFile(path.resolve(__dirname, '../../personal-area-v2/build/index.html'));
+    res.sendFile(path.resolve(__dirname, '../../client/build/index.html'));
   })
 }
 /** all requests to /api processed by indexRouter */
