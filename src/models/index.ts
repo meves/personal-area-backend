@@ -17,3 +17,11 @@ export const User = sequelize.define("User", {
     }, {
         tableName: "users"
 });
+
+export const Greeting = sequelize.define("Greeting", {
+        id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+        greeting: { type: DataTypes.STRING, allowNull: false }
+    }, {
+        tableName: "greetings",
+        timestamps: false
+});

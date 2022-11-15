@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = exports.Registration = void 0;
+exports.Greeting = exports.User = exports.Registration = void 0;
 const sequelize_1 = require("sequelize");
 const db_1 = __importDefault(require("../db"));
 exports.Registration = db_1.default.define("Registration", {
@@ -20,5 +20,12 @@ exports.User = db_1.default.define("User", {
     lastname: { type: sequelize_1.DataTypes.STRING, allowNull: false }
 }, {
     tableName: "users"
+});
+exports.Greeting = db_1.default.define("Greeting", {
+    id: { type: sequelize_1.DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    greeting: { type: sequelize_1.DataTypes.STRING, allowNull: false }
+}, {
+    tableName: "greetings",
+    timestamps: false
 });
 //# sourceMappingURL=index.js.map
