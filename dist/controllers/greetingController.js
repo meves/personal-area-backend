@@ -22,10 +22,16 @@ class GreetingController {
                     where: { id }
                 });
                 (0, logger_1.logger)(greeting);
-                return res.status(200 /* HTTP_CODES.OK_200 */).json({ data: { greeting } });
+                return res.status(200 /* HTTP_CODES.OK_200 */).json({
+                    greeting: greeting,
+                    error: null
+                });
             }
             catch (error) {
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json({ error });
+                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json({
+                    greeting: null,
+                    error: error
+                });
             }
         });
     }

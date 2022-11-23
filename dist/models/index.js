@@ -23,7 +23,7 @@ exports.User = db_1.default.define("User", {
 });
 exports.Greeting = db_1.default.define("Greeting", {
     id: { type: sequelize_1.DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    greeting: { type: sequelize_1.DataTypes.STRING, allowNull: false }
+    message: { type: sequelize_1.DataTypes.STRING, allowNull: false }
 }, {
     tableName: "greetings",
     timestamps: false

@@ -20,7 +20,7 @@ export const User = sequelize.define("User", {
 
 export const Greeting = sequelize.define("Greeting", {
         id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-        greeting: { type: DataTypes.STRING, allowNull: false }
+        message: { type: DataTypes.STRING, allowNull: false }
     }, {
         tableName: "greetings",
         timestamps: false
