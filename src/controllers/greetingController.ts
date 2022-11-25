@@ -1,8 +1,7 @@
 import { Response } from "express";
 import { Model } from "sequelize";
 import { Greeting } from "../models";
-import { RequestWithParams } from "../types";
-import { GreetingParams } from "../types/greeting";
+import { RequestWithParams, GreetingParams } from "../types";
 import { HTTP_CODES } from "../utils/http-codes";
 import { logger } from "../utils/logger";
 

@@ -7,8 +7,8 @@ const express_1 = __importDefault(require("express"));
 const authController_1 = __importDefault(require("../controllers/authController"));
 const router = express_1.default.Router();
 // /api
-router.get("/auth", authController_1.default.auth);
-router.post("/signup", authController_1.default.signup);
-router.post("/signin", authController_1.default.signin);
+router.get("/auth", authController_1.default.auth.bind(authController_1.default));
+router.post("/signup", authController_1.default.signup.bind(authController_1.default));
+router.post("/signin", authController_1.default.signin.bind(authController_1.default));
 exports.default = router;
 //# sourceMappingURL=auth.js.map
