@@ -12,28 +12,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("../models");
 const logger_1 = require("../utils/logger");
 class UserController {
-    constructor() {
-        this.userModel = {
-            users: [],
-            message: "",
-            error: null
-        };
-    }
-    // GET /api/users
+    // api/users
     getAll(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const users = yield models_1.User.findAll();
                 (0, logger_1.logger)(users);
-                return res.status(200 /* HTTP_CODES.OK_200 */).json(this.setUserModel(users, "", null));
+                return res
+                    .status(200 /* HTTP_CODES.OK_200 */)
+                    .json(this.setUserModel(null, users));
             }
             catch (error) {
-                this.setUserModel([], "Internal server error", error);
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json(this.userModel);
+                return res
+                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+                    .json(this.setUserModel(new ServerError(error)));
             }
         });
     }
-    // /api/users/:id
+    // api/users/:id
     getOne(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
@@ -42,70 +38,99 @@ class UserController {
                     where: { id }
                 });
                 if (!user) {
-                    return res.status(404 /* HTTP_CODES.NOT_FOUND_404 */).json(this.setUserModel([], "The requested user not found", new Error("User not found")));
+                    return res
+                        .status(404 /* HTTP_CODES.NOT_FOUND_404 */)
+                        .json(this.setUserModel(new ServerError("User not found")));
                 }
                 (0, logger_1.logger)(user);
-                return res.status(200 /* HTTP_CODES.OK_200 */).json(this.setUserModel([user], "", null));
+                return res
+                    .status(200 /* HTTP_CODES.OK_200 */)
+                    .json(this.setUserModel(null, [user]));
             }
             catch (error) {
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json(this.setUserModel([], "Internal server error", error));
+                return res
+                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+                    .json(this.setUserModel(new ServerError(error)));
             }
         });
     }
-    // POST
-    // /api/users
+    // api/users
     create(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { firstname, lastname } = req.body;
             try {
                 const user = yield models_1.User.create({ id: Number(new Date()), firstname, lastname });
                 (0, logger_1.logger)(user);
-                return res.status(201 /* HTTP_CODES.CREATED_201 */).json(this.setUserModel([user], "", null));
+                return res
+                    .status(201 /* HTTP_CODES.CREATED_201 */)
+                    .json(this.setUserModel(null, [user]));
             }
             catch (error) {
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json(this.setUserModel([], "Internal server error", error));
+                return res
+                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+                    .json(this.setUserModel(new ServerError(error)));
             }
         });
     }
-    // PUT
-    // /api/users/:id
+    // api/users/:id
     update(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const { firstname, lastname } = req.body;
             try {
-                const affectedCount = yield models_1.User.update({ firstname, lastname }, {
+                yield models_1.User.update({ firstname, lastname }, {
                     where: { id }
                 });
-                return res.status(200 /* HTTP_CODES.OK_200 */).json(this.setUserModel([], "", null));
+                return res
+                    .status(200 /* HTTP_CODES.OK_200 */)
+                    .json(this.setUserModel());
             }
             catch (error) {
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json(this.setUserModel([], "Internal server error", error));
+                return res
+                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+                    .json(this.setUserModel(new ServerError(error)));
             }
         });
     }
-    // DELETE
-    // /api/users/:id
+    // api/users/:id
     delete(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             try {
-                const deletedCount = yield models_1.User.destroy({
+                yield models_1.User.destroy({
                     where: { id }
                 });
-                return res.status(200 /* HTTP_CODES.OK_200 */).json(this.setUserModel([], "", null));
+                return res
+                    .status(200 /* HTTP_CODES.OK_200 */)
+                    .json(this.setUserModel());
             }
             catch (error) {
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json(this.setUserModel([], "Internal server error", error));
+                return res
+                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+                    .json(this.setUserModel(new ServerError(error)));
             }
         });
     }
-    setUserModel(users, message, error) {
-        this.userModel.users = users;
-        this.userModel.message = message;
-        this.userModel.error = error;
-        return this.userModel;
+    setUserModel(error = null, users = []) {
+        return {
+            users,
+            message: error ? error.getMessage() : "",
+            error: error ? error.getError() : error
+        };
     }
 }
 exports.default = new UserController();
+class ServerError {
+    constructor(error) {
+        this.message = "Internal server error";
+        this.error = null;
+        this.error = error;
+    }
+    getMessage() {
+        return this.message;
+    }
+    getError() {
+        return this.error;
+    }
+}
 //# sourceMappingURL=userController.js.map

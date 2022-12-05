@@ -16,38 +16,45 @@ const models_1 = require("../models");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = __importDefault(require("config"));
-// utils
-const generateJwt = (id, email, role) => {
-    return jsonwebtoken_1.default.sign({ id, email, role }, config_1.default.get("jwtSecret"), { expiresIn: '24h' });
-};
 class AuthController {
     constructor() {
-        this.authModel = {
-            token: "",
-            message: "",
-            error: null
+        this.ifRequestMethodIsOptions = (method) => {
+            return method === "OPTIONS";
+        };
+        this.getBearerToken = (header) => {
+            return header.split(" ")[1]; // "Bearer <token>"
+        };
+        this.generateJwt = (dataForToken) => {
+            return jsonwebtoken_1.default.sign(dataForToken, config_1.default.get("jwtSecret"), { expiresIn: '24h' });
         };
     }
     // GET /api/auth
     auth(req, res, next) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            // miss request with OPTIONS method
-            if (req.method === "OPTIONS")
+            if (this.ifRequestMethodIsOptions(req.method)) {
                 next();
+            }
             try {
-                const token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(" ")[1]; // "Bearer <token>"
+                const token = this.getBearerToken(req.headers.authorization);
                 if (!token) {
-                    return res.status(401 /* HTTP_CODES.UNAUTHORIZED_401 */).json(this.setAuthModel("", "User is not authorized", new Error("Unauthorized")));
+                    return res
+                        .status(401 /* HTTP_CODES.UNAUTHORIZED_401 */)
+                        .json(this.setAuthModel("", "User is not authorized", new Error("Unauthorized")));
                 }
-                // verify a token symmetric
-                const decoded = jsonwebtoken_1.default.verify(token, config_1.default.get("jwtSecret"));
-                // generate new token with user data
-                const newToken = generateJwt(decoded.id, decoded.email, decoded.role);
-                return res.status(200 /* HTTP_CODES.OK_200 */).json(this.setAuthModel(token, "", null));
+                this.decodedToken = jsonwebtoken_1.default.verify(token, config_1.default.get("jwtSecret"));
+                const newToken = this.generateJwt({
+                    id: this.decodedToken.id,
+                    email: this.decodedToken.email,
+                    role: this.decodedToken.role
+                });
+                return res
+                    .status(200 /* HTTP_CODES.OK_200 */)
+                    .json(this.setAuthModel(newToken, "", null));
             }
             catch (error) {
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json(this.setAuthModel("", "Internal server error", new Error("Server error")));
+                return res
+                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+                    .json(this.setAuthModel("", "User is not authorized", new Error("Unauthorized")));
             }
         });
     }
@@ -56,20 +63,32 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             const { email, password, role } = req.body;
             if (!email || !password) {
-                return res.status(400 /* HTTP_CODES.BAD_REQUEST_400 */).json(this.setAuthModel("", "Email or password is incorrect", new Error("Credentials is incorrect")));
+                return res
+                    .status(400 /* HTTP_CODES.BAD_REQUEST_400 */)
+                    .json(this.setAuthModel("", "Email or password is incorrect", new Error("Credentials is incorrect")));
             }
             try {
                 const candidate = yield models_1.Registration.findOne({ where: { email } });
                 if (!!candidate) {
-                    return res.status(409 /* HTTP_CODES.CONFLICT_409 */).json(this.setAuthModel("", `User with email ${email} already exists`, new Error("Already exists")));
+                    return res
+                        .status(409 /* HTTP_CODES.CONFLICT_409 */)
+                        .json(this.setAuthModel("", `User with email ${email} already exists`, new Error("Already exists")));
                 }
                 const hashPassword = yield bcrypt_1.default.hash(password, 12);
                 const registration = yield models_1.Registration.create({ id: Number(new Date), email, password: hashPassword, role });
-                const token = generateJwt(registration.id, registration.email, registration.role);
-                return res.status(201 /* HTTP_CODES.CREATED_201 */).json(this.setAuthModel(token, "", null));
+                const token = this.generateJwt({
+                    id: registration.id,
+                    email: registration.email,
+                    role: registration.role
+                });
+                return res
+                    .status(201 /* HTTP_CODES.CREATED_201 */)
+                    .json(this.setAuthModel(token, "", null));
             }
             catch (error) {
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json(this.setAuthModel("", "Internal server error", new Error("Server error")));
+                return res
+                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+                    .json(this.setAuthModel("", "Internal server error", new Error("Server error")));
             }
         });
     }
@@ -78,30 +97,41 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             const { email, password } = req.body;
             if (!email || !password) {
-                return res.status(400 /* HTTP_CODES.BAD_REQUEST_400 */).json(this.setAuthModel("", "Email or password is incorrect", new Error("Credentials is incorrect")));
+                return res
+                    .status(400 /* HTTP_CODES.BAD_REQUEST_400 */)
+                    .json(this.setAuthModel("", "Email or password is incorrect", new Error("Credentials is incorrect")));
             }
             try {
                 const registration = yield models_1.Registration.findOne({ where: { email } });
                 if (!registration) {
-                    return res.status(400 /* HTTP_CODES.BAD_REQUEST_400 */).json(this.setAuthModel("", "Email or password is incorrect", new Error("Credentials is incorrect")));
+                    return res
+                        .status(400 /* HTTP_CODES.BAD_REQUEST_400 */)
+                        .json(this.setAuthModel("", "Email or password is incorrect", new Error("Credentials is incorrect")));
                 }
                 const comparedPassword = bcrypt_1.default.compareSync(password, registration.password);
                 if (!comparedPassword) {
-                    return res.status(400 /* HTTP_CODES.BAD_REQUEST_400 */).json(this.setAuthModel("", "Email or password is incorrect", new Error("Credentials is incorrect")));
+                    return res
+                        .status(400 /* HTTP_CODES.BAD_REQUEST_400 */)
+                        .json(this.setAuthModel("", "Email or password is incorrect", new Error("Credentials is incorrect")));
                 }
-                const token = generateJwt(registration.id, registration.email, registration.role);
-                return res.status(200 /* HTTP_CODES.OK_200 */).json(this.setAuthModel(token, "", null));
+                const token = this.generateJwt({
+                    id: registration.id,
+                    email: registration.email,
+                    role: registration.role
+                });
+                return res
+                    .status(200 /* HTTP_CODES.OK_200 */)
+                    .json(this.setAuthModel(token, "", null));
             }
             catch (error) {
-                return res.status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */).json(this.setAuthModel("", "Internal server error", new Error("Server error")));
+                return res
+                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+                    .json(this.setAuthModel("", "Internal server error", new Error("Server error")));
             }
         });
     }
     setAuthModel(token, message, error) {
-        this.authModel.token = token;
-        this.authModel.message = message;
-        this.authModel.error = error;
-        return this.authModel;
+        return { token, message, error };
     }
 }
 exports.default = new AuthController();

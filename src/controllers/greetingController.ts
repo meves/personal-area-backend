@@ -15,9 +15,8 @@ type GreetingModel = {
 }
 
 class GreetingController {
-    // GET
-    // /api/greeting/:id
-    async getOne(req: RequestWithParams<GreetingParams>, res: Response<GreetingModel>) {
+    // GET api/greeting/:id
+    public async getOne(req: RequestWithParams<GreetingParams>, res: Response<GreetingModel>) {
         const { id } = req.params;
         try {
             const greeting = await Greeting.findOne({

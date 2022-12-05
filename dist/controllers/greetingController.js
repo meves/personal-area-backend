@@ -12,8 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("../models");
 const logger_1 = require("../utils/logger");
 class GreetingController {
-    // GET
-    // /api/greeting/:id
+    // GET api/greeting/:id
     getOne(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;

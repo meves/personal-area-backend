@@ -23,107 +23,125 @@ type UsersModel = {
 
 class UserController {
 
-    userModel: UsersModel = {
-        users: [],
-        message: "",
-        error: null
-    }
-    
-    // GET /api/users
-    async getAll(req: Request, res: Response<UsersModel>) {
+    // api/users
+    public async getAll(req: Request, res: Response<UsersModel>) {
         try {
             const users: Model<User>[] = await User.findAll();
             logger(users);
-            return res.status(HTTP_CODES.OK_200).json(
-                this.setUserModel(users, "", null)
+            return res
+                    .status(HTTP_CODES.OK_200)
+                    .json(this.setUserModel(null, users)
             );
         } catch (error) {
-            this.setUserModel([], "Internal server error", error)
-            return res.status(HTTP_CODES.INTERNAL_SERVER_ERROR_500).json(
-                this.userModel
+            return res
+                    .status(HTTP_CODES.INTERNAL_SERVER_ERROR_500)
+                    .json(this.setUserModel(new ServerError(error))
             );
         }
     }
-    // /api/users/:id
-    async getOne(req: RequestWithParams<UserParams>, res: Response<UsersModel>) {
+    // api/users/:id
+    public async getOne(req: RequestWithParams<UserParams>, res: Response<UsersModel>) {
         const { id } = req.params;
         try {
-            const user: Model<User> | null = await User.findOne({
+            const user = await User.findOne({
                 where: { id }
             });
             if (!user) {
-                return res.status(HTTP_CODES.NOT_FOUND_404).json(
-                    this.setUserModel([], "The requested user not found", new Error("User not found"))
+                return res
+                        .status(HTTP_CODES.NOT_FOUND_404)
+                        .json(this.setUserModel(new ServerError("User not found"))
                 )
             }
             logger(user);
-            return res.status(HTTP_CODES.OK_200).json(
-                this.setUserModel([user as Model<User>], "", null)
+            return res
+                    .status(HTTP_CODES.OK_200)
+                    .json(this.setUserModel(null, [user])
             );
         } catch (error) {
-            return res.status(HTTP_CODES.INTERNAL_SERVER_ERROR_500).json(
-                this.setUserModel([], "Internal server error", error)
+            return res
+                    .status(HTTP_CODES.INTERNAL_SERVER_ERROR_500)
+                    .json(this.setUserModel(new ServerError(error))
             );
         }
     }
-    // POST
-    // /api/users
-    async create(req: RequestWithBody<UserBody>, res: Response<UsersModel>) {
+    // api/users
+    public async create(req: RequestWithBody<UserBody>, res: Response<UsersModel>) {
         const { firstname, lastname } = req.body
         try {
-            const user: Model<User> | null = await User.create({ id: Number(new Date()), firstname, lastname });
+            const user = await User.create({ id: Number(new Date()), firstname, lastname });
             logger(user);        
-            return res.status(HTTP_CODES.CREATED_201).json(
-                this.setUserModel([user as Model<User>], "", null)
+            return res
+                    .status(HTTP_CODES.CREATED_201)
+                    .json(this.setUserModel(null, [user])
             );
         } catch (error) {
-            return res.status(HTTP_CODES.INTERNAL_SERVER_ERROR_500).json(
-                this.setUserModel([], "Internal server error", error)
+            return res
+                    .status(HTTP_CODES.INTERNAL_SERVER_ERROR_500)
+                    .json(this.setUserModel(new ServerError(error))
             );
         }
     }
-    // PUT
-    // /api/users/:id
-    async update(req: RequestWithParamsAndBody<UserParams, UserBody>, res: Response<UsersModel>) {
+    // api/users/:id
+    public async update(req: RequestWithParamsAndBody<UserParams, UserBody>, res: Response<UsersModel>) {
         const { id } = req.params;
         const { firstname, lastname } = req.body;
         try {
-            const affectedCount: number[] = await User.update({ firstname, lastname }, {
+            await User.update({ firstname, lastname }, {
                 where: { id }
             });
-            return res.status(HTTP_CODES.OK_200).json(
-                this.setUserModel([], "", null)
+            return res
+                    .status(HTTP_CODES.OK_200)
+                    .json(this.setUserModel()
             );
         } catch (error) {
-            return res.status(HTTP_CODES.INTERNAL_SERVER_ERROR_500).json(
-                this.setUserModel([], "Internal server error", error)
+            return res
+                .status(HTTP_CODES.INTERNAL_SERVER_ERROR_500)
+                .json(this.setUserModel(new ServerError(error))
             );
         }
     }
-    // DELETE
-    // /api/users/:id
-    async delete(req: RequestWithParamsAndBody<UserParams, UserBody>, res: Response<UsersModel>) {
+    // api/users/:id
+    public async delete(req: RequestWithParamsAndBody<UserParams, UserBody>, res: Response<UsersModel>) {
         const { id } = req.params;
         try {
-            const deletedCount: number = await User.destroy({
+            await User.destroy({
                 where: { id }
             });
-            return res.status(HTTP_CODES.OK_200).json(
-                this.setUserModel([], "", null)
+            return res
+                    .status(HTTP_CODES.OK_200)
+                    .json(this.setUserModel()
             );
         } catch (error) {
-            return res.status(HTTP_CODES.INTERNAL_SERVER_ERROR_500).json(
-                this.setUserModel([], "Internal server error", error)
+            return res
+                    .status(HTTP_CODES.INTERNAL_SERVER_ERROR_500)
+                    .json(this.setUserModel(new ServerError(error))
             );
         }
     }
 
-    setUserModel( users: Model<User>[], message: string, error: any ) {
-        this.userModel.users = users;
-        this.userModel.message = message;
-        this.userModel.error = error;
-        return this.userModel;
+    private setUserModel( error: ServerError | null = null, users: Model<User>[] = [] ) {
+        return { 
+            users, 
+            message: error ? error.getMessage() : "", 
+            error: error ? error.getError() : error }
     }
 }
 
 export default new UserController();
+
+class ServerError {
+    private message: string = "Internal server error";
+    private error: any = null;
+
+    constructor(error: any) {
+        this.error = error;
+    }
+
+    getMessage(): string {
+        return this.message
+    }
+
+    getError() {
+        return this.error
+    }
+}
