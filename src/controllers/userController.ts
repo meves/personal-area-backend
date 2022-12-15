@@ -8,11 +8,11 @@ import { Model } from "sequelize";
 
 
 type User = {
-    id: number
+    id?: number
     firstname: string
     lastname: string
-    createdAt: Date
-    updatedAt: Date
+    createdAt?: Date
+    updatedAt?: Date
 }
 
 type UsersModel = {
@@ -39,6 +39,10 @@ class UserController {
             );
         }
     }
+
+
+
+
     // api/users/:id
     public async getOne(req: RequestWithParams<UserParams>, res: Response<UsersModel>) {
         const { id } = req.params;
@@ -64,6 +68,10 @@ class UserController {
             );
         }
     }
+
+
+
+
     // api/users
     public async create(req: RequestWithBody<UserBody>, res: Response<UsersModel>) {
         const { firstname, lastname } = req.body
@@ -81,42 +89,62 @@ class UserController {
             );
         }
     }
+
+    
+
+
     // api/users/:id
     public async update(req: RequestWithParamsAndBody<UserParams, UserBody>, res: Response<UsersModel>) {
         const { id } = req.params;
         const { firstname, lastname } = req.body;
+        const error = await this.updateUserById({ id, firstname, lastname });
+        if (error) {
+            return this.sendServerErrorResponse(error, res);
+        }
+        return res
+                .status(HTTP_CODES.OK_200)
+                .json(this.setUserModel()
+        );
+    }
+
+    private async updateUserById(user: User) {
         try {
-            await User.update({ firstname, lastname }, {
-                where: { id }
-            });
-            return res
-                    .status(HTTP_CODES.OK_200)
-                    .json(this.setUserModel()
-            );
+            await User.update({ firstname: user.firstname, lastname: user.lastname }, {
+                where: { user: user.id }
+            });            
         } catch (error) {
-            return res
-                .status(HTTP_CODES.INTERNAL_SERVER_ERROR_500)
-                .json(this.setUserModel(new ServerError(error))
-            );
+            return error;
         }
     }
+
+
     // api/users/:id
     public async delete(req: RequestWithParamsAndBody<UserParams, UserBody>, res: Response<UsersModel>) {
         const { id } = req.params;
-        try {
-            await User.destroy({
-                where: { id }
-            });
-            return res
-                    .status(HTTP_CODES.OK_200)
-                    .json(this.setUserModel()
-            );
-        } catch (error) {
-            return res
-                    .status(HTTP_CODES.INTERNAL_SERVER_ERROR_500)
-                    .json(this.setUserModel(new ServerError(error))
-            );
+        const error = await this.deleteUserById(id);
+        if (error) {
+            return this.sendServerErrorResponse(error, res);
         }
+        return res
+                .status(HTTP_CODES.OK_200)
+                .json(this.setUserModel()
+        );        
+    }
+
+    private async deleteUserById(id?: number) {
+        try {
+            await User.destroy({ where: { id } });
+        } catch (error) {
+            return error;
+        }
+    }
+
+    // utils
+    private sendServerErrorResponse(error: any, res: Response) {
+        return res
+                .status(HTTP_CODES.INTERNAL_SERVER_ERROR_500)
+                .json(this.setUserModel(new ServerError(error))
+        );
     }
 
     private setUserModel( error: ServerError | null = null, users: Model<User>[] = [] ) {
@@ -128,6 +156,7 @@ class UserController {
 }
 
 export default new UserController();
+
 
 class ServerError {
     private message: string = "Internal server error";

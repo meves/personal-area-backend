@@ -77,18 +77,24 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const { firstname, lastname } = req.body;
+            const error = yield this.updateUserById({ id, firstname, lastname });
+            if (error) {
+                return this.sendServerErrorResponse(error, res);
+            }
+            return res
+                .status(200 /* HTTP_CODES.OK_200 */)
+                .json(this.setUserModel());
+        });
+    }
+    updateUserById(user) {
+        return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield models_1.User.update({ firstname, lastname }, {
-                    where: { id }
+                yield models_1.User.update({ firstname: user.firstname, lastname: user.lastname }, {
+                    where: { user: user.id }
                 });
-                return res
-                    .status(200 /* HTTP_CODES.OK_200 */)
-                    .json(this.setUserModel());
             }
             catch (error) {
-                return res
-                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
-                    .json(this.setUserModel(new ServerError(error)));
+                return error;
             }
         });
     }
@@ -96,20 +102,30 @@ class UserController {
     delete(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
+            const error = yield this.deleteUserById(id);
+            if (error) {
+                return this.sendServerErrorResponse(error, res);
+            }
+            return res
+                .status(200 /* HTTP_CODES.OK_200 */)
+                .json(this.setUserModel());
+        });
+    }
+    deleteUserById(id) {
+        return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield models_1.User.destroy({
-                    where: { id }
-                });
-                return res
-                    .status(200 /* HTTP_CODES.OK_200 */)
-                    .json(this.setUserModel());
+                yield models_1.User.destroy({ where: { id } });
             }
             catch (error) {
-                return res
-                    .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
-                    .json(this.setUserModel(new ServerError(error)));
+                return error;
             }
         });
+    }
+    // utils
+    sendServerErrorResponse(error, res) {
+        return res
+            .status(500 /* HTTP_CODES.INTERNAL_SERVER_ERROR_500 */)
+            .json(this.setUserModel(new ServerError(error)));
     }
     setUserModel(error = null, users = []) {
         return {
